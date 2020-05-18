@@ -1,4 +1,4 @@
-import { Injectable, HttpService } from '@nestjs/common';
+import { Injectable, HttpService, HttpException } from '@nestjs/common';
 
 @Injectable()
 export class MainService {
@@ -47,15 +47,15 @@ export class MainService {
     requestUrl = requestUrl.concat('.json');
 
     if (question == null) {
-      throw Error('The question cannot be empty.');
+      throw new HttpException('The question cannot be empty.', 500);
     }
 
     if (question.length > 150 || question.length < 20) {
-      throw Error('The question needs between 20 and 150 characters.');
+      throw new HttpException('The question needs between 20 and 150 characters.', 500);
     }
 
     if (!question.includes('?')) {
-      throw Error('The question has to end with a \'?\'');
+      throw new HttpException('The question has to end with a \'?\'', 500);
     }
 
     let newQuestion = {
@@ -94,7 +94,7 @@ export class MainService {
     });
 
     if (currentLikers.includes(userId)) {
-      throw Error('This user already liked this question.');
+      throw new HttpException('This user already liked this question.', 500);
     }
 
     currentLikers.push(userId);
@@ -121,12 +121,13 @@ export class MainService {
     });
 
     if (!currentLikers.includes(userId)) {
-      throw Error('This user never liked this question.');
+      throw new HttpException('This user never liked this question.', 500);
     }
 
     if (userId === askerId) {
-      throw Error('You can\'t downvote your own question.');
+      throw new HttpException('You can\'t downvote your own question.', 500);
     }
+    
 
     currentLikers.splice(currentLikers.indexOf(userId), 1);
     let upVotedQuestion = {
