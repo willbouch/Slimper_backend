@@ -16,10 +16,10 @@ export class MainController {
   }
 
   @Post('/questions/:sessionId')
-  addQuestion(@Param('sessionId') sessionId: String,
+  async addQuestion(@Param('sessionId') sessionId: String,
     @Body('question') question: String,
-    @Body('userId') userId: String): any {
-    return this.service.addQuestion(sessionId, question, userId);
+    @Body('userId') userId: String): Promise<any> {
+    return await this.service.addQuestion(sessionId, question, userId);
   }
 
   @Delete('/questions/:sessionId/:questionId')
@@ -29,17 +29,17 @@ export class MainController {
   }
 
   @Patch('/questions/upvote/:sessionId/:questionId')
-  upVote(@Param('sessionId') sessionId: String,
+  async upVote(@Param('sessionId') sessionId: String,
     @Param('questionId') questionId: String,
-    @Body('userId') userId: String): any {
-    this.service.upVote(sessionId, questionId, userId);
+    @Body('userId') userId: String): Promise<any> {
+    await this.service.upVote(sessionId, questionId, userId);
   }
 
   @Patch('/questions/downvote/:sessionId/:questionId')
-  downVote(@Param('sessionId') sessionId: String,
+  async downVote(@Param('sessionId') sessionId: String,
     @Param('questionId') questionId: String,
-    @Body('userId') userId: String): any {
-    this.service.downVote(sessionId, questionId, userId);
+    @Body('userId') userId: String): Promise<any> {
+    await this.service.downVote(sessionId, questionId, userId);
   }
 
 }
