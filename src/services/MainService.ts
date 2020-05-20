@@ -16,7 +16,11 @@ export class MainService {
       'dummy': 'dummy'
     }
 
-    await this.http.post(requestUrl, dummyData).toPromise();
+    try {
+      await this.http.post(requestUrl, dummyData).toPromise();
+    } catch (error) {
+      throw error;
+    }
 
     return sessionId;
   }
@@ -26,9 +30,13 @@ export class MainService {
     requestUrl = requestUrl.concat('.json');
 
     let questions;
-    await this.http.get(requestUrl).toPromise().then(res => {
-      questions = res.data;
-    });
+    try {
+      await this.http.get(requestUrl).toPromise().then(res => {
+        questions = res.data;
+      });
+    } catch (error) {
+      throw error;
+    }
 
     let mappedQuestions = new Map(Object.entries(questions));
     mappedQuestions.delete('dummy');
@@ -36,7 +44,7 @@ export class MainService {
     let filteredQuestion = {};
     mappedQuestions.forEach((v, k) => {
       filteredQuestion[k] = v;
-    })
+    });
 
     filteredQuestion = JSON.parse(JSON.stringify(filteredQuestion));
     return filteredQuestion;
@@ -66,9 +74,14 @@ export class MainService {
     };
 
     let questionId;
-    await this.http.post(requestUrl, newQuestion).toPromise().then(res => {
-      questionId = res.data['name'];
-    });
+
+    try {
+      await this.http.post(requestUrl, newQuestion).toPromise().then(res => {
+        questionId = res.data['name'];
+      });
+    } catch (error) {
+      throw error;
+    }
 
     return questionId;
   }
@@ -78,7 +91,11 @@ export class MainService {
     requestUrl = requestUrl.concat('/').concat(questionId.toString());
     requestUrl = requestUrl.concat('.json');
 
-    await this.http.delete(requestUrl).toPromise();
+    try {
+      await this.http.delete(requestUrl).toPromise();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async upVote(sessionId: String, questionId: String, userId: String): Promise<any> {
@@ -88,10 +105,15 @@ export class MainService {
 
     let currentUpVote: number;
     let currentLikers: any;
-    await this.http.get(requestUrl).toPromise().then((res) => {
-      currentUpVote = res.data['upVotes'];
-      currentLikers = res.data['likers'];
-    });
+
+    try {
+      await this.http.get(requestUrl).toPromise().then((res) => {
+        currentUpVote = res.data['upVotes'];
+        currentLikers = res.data['likers'];
+      });
+    } catch (error) {
+      throw error;
+    }
 
     if (currentLikers.includes(userId)) {
       throw new HttpException('This user already liked this question.', 500);
@@ -103,7 +125,11 @@ export class MainService {
       'likers': currentLikers,
     };
 
-    await this.http.patch(requestUrl, upVotedQuestion).toPromise();
+    try {
+      await this.http.patch(requestUrl, upVotedQuestion).toPromise();
+    } catch (error) {
+      throw error;
+    }
   }
 
   async downVote(sessionId: String, questionId: String, userId: String): Promise<any> {
@@ -114,11 +140,16 @@ export class MainService {
     let currentUpVote: number;
     let currentLikers: any;
     let askerId: String;
-    await this.http.get(requestUrl).toPromise().then((res) => {
-      currentUpVote = res.data['upVotes'];
-      currentLikers = res.data['likers'];
-      askerId = res.data['userId']
-    });
+
+    try {
+      await this.http.get(requestUrl).toPromise().then((res) => {
+        currentUpVote = res.data['upVotes'];
+        currentLikers = res.data['likers'];
+        askerId = res.data['userId']
+      });
+    } catch (error) {
+      throw error;
+    }
 
     if (!currentLikers.includes(userId)) {
       throw new HttpException('This user never liked this question.', 500);
@@ -127,7 +158,6 @@ export class MainService {
     if (userId === askerId) {
       throw new HttpException('You can\'t downvote your own question.', 500);
     }
-    
 
     currentLikers.splice(currentLikers.indexOf(userId), 1);
     let upVotedQuestion = {
@@ -135,6 +165,10 @@ export class MainService {
       'likers': currentLikers,
     };
 
-    await this.http.patch(requestUrl, upVotedQuestion).toPromise();
+    try {
+      await this.http.patch(requestUrl, upVotedQuestion).toPromise();
+    } catch (error) {
+      throw error;
+    }
   }
 }
