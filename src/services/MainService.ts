@@ -19,23 +19,24 @@ export class MainService {
     try {
       await this.http.post(requestUrl, dummyData).toPromise();
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
 
     return sessionId;
   }
 
   async getSessionQuestions(sessionId: String): Promise<any> {
+    await this.performSessionIdChecks(sessionId);
+
     let requestUrl = this.baseUrl.concat(sessionId.toString());
     requestUrl = requestUrl.concat('.json');
 
     let questions;
     try {
-      await this.http.get(requestUrl).toPromise().then(res => {
-        questions = res.data;
-      });
+      let response = await this.http.get(requestUrl).toPromise();
+      questions = response.data;
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
 
     let mappedQuestions = new Map(Object.entries(questions));
@@ -51,10 +52,9 @@ export class MainService {
   }
 
   async addQuestion(sessionId: String, question: String, userId: String): Promise<any> {
-    let requestUrl = this.baseUrl.concat(sessionId.toString());
-    requestUrl = requestUrl.concat('.json');
+    await this.performSessionIdChecks(sessionId);
 
-    if (question == null) {
+    if (question == null || question === '') {
       throw new HttpException('The question cannot be empty.', 500);
     }
 
@@ -63,8 +63,15 @@ export class MainService {
     }
 
     if (!question.includes('?')) {
-      throw new HttpException('The question has to end with a \'?\'', 500);
+      throw new HttpException('The question has to end with a \'?\'.', 500);
     }
+
+    if (userId == null || userId === '') {
+      throw new HttpException('The user cannot have an empty id.', 500);
+    }
+
+    let requestUrl = this.baseUrl.concat(sessionId.toString());
+    requestUrl = requestUrl.concat('.json');
 
     let newQuestion = {
       'question': question,
@@ -73,20 +80,24 @@ export class MainService {
       'likers': [userId]
     };
 
-    let questionId;
-
+    let questionId: String;
     try {
-      await this.http.post(requestUrl, newQuestion).toPromise().then(res => {
-        questionId = res.data['name'];
-      });
+      let response = await this.http.post(requestUrl, newQuestion).toPromise();
+      questionId = response.data['name'];
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
 
     return questionId;
   }
 
   async deleteQuestion(sessionId: String, questionId: String): Promise<any> {
+    await this.performSessionIdChecks(sessionId);
+
+    if (questionId == null || questionId === '') {
+      throw new HttpException('The question cannot have an empty id.', 500);
+    }
+
     let requestUrl = this.baseUrl.concat(sessionId.toString());
     requestUrl = requestUrl.concat('/').concat(questionId.toString());
     requestUrl = requestUrl.concat('.json');
@@ -94,25 +105,33 @@ export class MainService {
     try {
       await this.http.delete(requestUrl).toPromise();
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
   }
 
   async upVote(sessionId: String, questionId: String, userId: String): Promise<any> {
+    await this.performSessionIdChecks(sessionId);
+
+    if (questionId == null || questionId === '') {
+      throw new HttpException('The question cannot have an empty id.', 500);
+    }
+
+    if (userId == null || userId === '') {
+      throw new HttpException('The user cannot have an empty id.', 500);
+    }
+
     let requestUrl = this.baseUrl.concat(sessionId.toString());
     requestUrl = requestUrl.concat('/').concat(questionId.toString());
     requestUrl = requestUrl.concat('.json');
 
     let currentUpVote: number;
     let currentLikers: any;
-
     try {
-      await this.http.get(requestUrl).toPromise().then((res) => {
-        currentUpVote = res.data['upVotes'];
-        currentLikers = res.data['likers'];
-      });
+      let response = await this.http.get(requestUrl).toPromise();
+      currentUpVote = response.data['upVotes'];
+      currentLikers = response.data['likers'];
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
 
     if (currentLikers.includes(userId)) {
@@ -128,11 +147,23 @@ export class MainService {
     try {
       await this.http.patch(requestUrl, upVotedQuestion).toPromise();
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
+
+    return true;
   }
 
   async downVote(sessionId: String, questionId: String, userId: String): Promise<any> {
+    await this.performSessionIdChecks(sessionId);
+
+    if (questionId == null || questionId === '') {
+      throw new HttpException('The question cannot have an empty id.', 500);
+    }
+
+    if (userId == null || userId === '') {
+      throw new HttpException('The user cannot have an empty id.', 500);
+    }
+
     let requestUrl = this.baseUrl.concat(sessionId.toString());
     requestUrl = requestUrl.concat('/').concat(questionId.toString());
     requestUrl = requestUrl.concat('.json');
@@ -140,15 +171,13 @@ export class MainService {
     let currentUpVote: number;
     let currentLikers: any;
     let askerId: String;
-
     try {
-      await this.http.get(requestUrl).toPromise().then((res) => {
-        currentUpVote = res.data['upVotes'];
-        currentLikers = res.data['likers'];
-        askerId = res.data['userId']
-      });
+      let response = await this.http.get(requestUrl).toPromise();
+      currentUpVote = response.data['upVotes'];
+      currentLikers = response.data['likers'];
+      askerId = response.data['userId']
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
     }
 
     if (!currentLikers.includes(userId)) {
@@ -168,7 +197,19 @@ export class MainService {
     try {
       await this.http.patch(requestUrl, upVotedQuestion).toPromise();
     } catch (error) {
-      throw error;
+      throw new HttpException('Error while accessing the database.', 500);
+    }
+
+    return true;
+  }
+
+  async performSessionIdChecks(sessionId: String): Promise<void> {
+    if (sessionId == null || sessionId === '') {
+      throw new HttpException('The session cannot have an empty id.', 500);
+    }
+
+    if (sessionId.match(new RegExp('[A-Z0-9]{6}')) == null || sessionId.length != 6) {
+      throw new HttpException('The session cannot have an invalid id.', 500);
     }
   }
 }
