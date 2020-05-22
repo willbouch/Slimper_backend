@@ -184,7 +184,7 @@ describe('MainService', () => {
         let validQuestionId: String = 'Some id';
 
         it('should successfully upvote a question', async () => {
-            const requestResult: AxiosResponse = {
+            const getRequestResult: AxiosResponse = {
                 data: {
                     likers: ['1', '2'],
                     question: 'This is a question for a test ?',
@@ -197,7 +197,16 @@ describe('MainService', () => {
                 config: {}
             };
 
-            jest.spyOn(httpService, 'get').mockImplementation(() => of(requestResult));
+            const pathRequestResult: AxiosResponse = {
+                data: {},
+                status: 200,
+                statusText: '',
+                headers: {},
+                config: {}
+            };
+
+            jest.spyOn(httpService, 'get').mockImplementation(() => of(getRequestResult));
+            jest.spyOn(httpService, 'patch').mockImplementation(() => of(pathRequestResult));
             const didWork = await mainService.upVote(validSessionId, validQuestionId, validUserId);
             expect(didWork).toEqual(true);
         });
