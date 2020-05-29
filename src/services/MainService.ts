@@ -34,6 +34,11 @@ export class MainService {
     let questions;
     try {
       let response = await this.http.get(requestUrl).toPromise();
+
+      if(response.data == null || response.data == undefined) {
+        throw Error();
+      }
+
       questions = response.data;
     } catch (error) {
       throw new HttpException('Error while accessing the database.', 500);
